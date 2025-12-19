@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # 1. Elysia App with OpenTelemetry
+  app:
+    build: ./app
+    ports:
+      - "3000:3000"
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - NODE_ENV=production
+    depends_on:
+      - otel-collector
+    networks:
+      - otel-network
+
+  # 2. OpenTelemetry Collector (รับและส่งต่อ Metrics)
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
+    ports:
+      - "4318:4318"  # OTLP HTTP receiver
+      - "8889:8889"  # Prometheus exporter
+    networks:
+      - otel-network
+
+  # 3. Prometheus (เก็บข้อมูล Metrics)
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - otel-network
+
+  # 4. Grafana (Dashboard สำหรับแสดงผล)
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    networks:
+      - otel-network
+
+networks:
+  otel-network:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:

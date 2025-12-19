@@ -1,0 +1,117 @@
+{
+    "dashboard": {
+        "title": "ElysiaJS Observability Dashboard",
+        "tags": [
+            "elysia",
+            "opentelemetry"
+        ],
+        "timezone": "browser",
+        "panels": [
+            {
+                "id": 1,
+                "title": "HTTP Request Rate",
+                "type": "graph",
+                "gridPos": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 0
+                },
+                "targets": [
+                    {
+                        "expr": "rate(elysia_http_server_duration_count[1m])",
+                        "legendFormat": "{{method}} {{route}}"
+                    }
+                ]
+            },
+            {
+                "id": 2,
+                "title": "HTTP Request Duration (p95)",
+                "type": "graph",
+                "gridPos": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 12,
+                    "y": 0
+                },
+                "targets": [
+                    {
+                        "expr": "histogram_quantile(0.95, rate(elysia_http_server_duration_bucket[1m]))",
+                        "legendFormat": "p95 - {{method}} {{route}}"
+                    }
+                ]
+            },
+            {
+                "id": 3,
+                "title": "Memory Usage",
+                "type": "graph",
+                "gridPos": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 0,
+                    "y": 8
+                },
+                "targets": [
+                    {
+                        "expr": "elysia_process_runtime_bun_memory_rss",
+                        "legendFormat": "RSS Memory"
+                    }
+                ]
+            },
+            {
+                "id": 4,
+                "title": "CPU Usage",
+                "type": "graph",
+                "gridPos": {
+                    "h": 8,
+                    "w": 12,
+                    "x": 12,
+                    "y": 8
+                },
+                "targets": [
+                    {
+                        "expr": "rate(elysia_system_cpu_time_seconds_total[1m])",
+                        "legendFormat": "{{state}}"
+                    }
+                ]
+            },
+            {
+                "id": 5,
+                "title": "Active Requests",
+                "type": "stat",
+                "gridPos": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 0,
+                    "y": 16
+                },
+                "targets": [
+                    {
+                        "expr": "elysia_http_server_active_requests"
+                    }
+                ]
+            },
+            {
+                "id": 6,
+                "title": "Total Requests",
+                "type": "stat",
+                "gridPos": {
+                    "h": 4,
+                    "w": 6,
+                    "x": 6,
+                    "y": 16
+                },
+                "targets": [
+                    {
+                        "expr": "sum(elysia_http_server_duration_count)"
+                    }
+                ]
+            }
+        ],
+        "refresh": "5s",
+        "time": {
+            "from": "now-15m",
+            "to": "now"
+        }
+    }
+}

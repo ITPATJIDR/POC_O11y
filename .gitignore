@@ -1,0 +1,8 @@
+node_modules/
+bun.lockb
+.env
+.DS_Store
+
+# Docker volumes
+prometheus-data/
+grafana-data/
