@@ -101,8 +101,8 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "rate(elysia_http_server_duration_count[1m])",
-                    "legendFormat": "{{method}} {{route}}",
+                    "expr": "rate(elysia_http_client_duration_milliseconds_count[1m])",
+                    "legendFormat": "HTTP Requests",
                     "refId": "A"
                 }
             ],
@@ -172,7 +172,10 @@
             "id": 2,
             "options": {
                 "legend": {
-                    "calcs": [],
+                    "calcs": [
+                        "mean",
+                        "max"
+                    ],
                     "displayMode": "list",
                     "placement": "bottom",
                     "showLegend": true
@@ -188,12 +191,21 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "histogram_quantile(0.95, rate(elysia_http_server_duration_bucket[1m]))",
-                    "legendFormat": "p95 - {{method}} {{route}}",
+                    "expr": "rate(elysia_http_client_duration_milliseconds_sum[1m]) / rate(elysia_http_client_duration_milliseconds_count[1m])",
+                    "legendFormat": "Avg Duration",
                     "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "histogram_quantile(0.95, rate(elysia_http_client_duration_milliseconds_bucket[1m]))",
+                    "legendFormat": "p95 Duration",
+                    "refId": "B"
                 }
             ],
-            "title": "HTTP Request Duration (p95)",
+            "title": "HTTP Request Duration",
             "type": "timeseries"
         },
         {
@@ -215,8 +227,12 @@
                                 "value": null
                             },
                             {
+                                "color": "yellow",
+                                "value": 100000000
+                            },
+                            {
                                 "color": "red",
-                                "value": 80
+                                "value": 200000000
                             }
                         ]
                     },
@@ -250,12 +266,12 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "elysia_process_runtime_bun_memory_rss",
-                    "legendFormat": "RSS Memory",
+                    "expr": "elysia_process_memory_usage",
+                    "legendFormat": "Process Memory",
                     "refId": "A"
                 }
             ],
-            "title": "Memory Usage",
+            "title": "Process Memory Usage",
             "type": "gauge"
         },
         {
@@ -337,12 +353,108 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "rate(elysia_system_cpu_time_seconds_total[1m])",
-                    "legendFormat": "{{state}}",
+                    "expr": "elysia_process_cpu_utilization",
+                    "legendFormat": "Process CPU",
+                    "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "elysia_system_cpu_utilization",
+                    "legendFormat": "System CPU",
+                    "refId": "B"
+                }
+            ],
+            "title": "CPU Utilization",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "drawStyle": "line",
+                        "fillOpacity": 10,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "tooltip": false,
+                            "viz": false,
+                            "legend": false
+                        },
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "never",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": null
+                            }
+                        ]
+                    },
+                    "unit": "decbytes"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 16
+            },
+            "id": 5,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "prometheus"
+                    },
+                    "expr": "elysia_system_memory_usage",
+                    "legendFormat": "System Memory",
                     "refId": "A"
                 }
             ],
-            "title": "CPU Usage",
+            "title": "System Memory Usage",
             "type": "timeseries"
         },
         {
@@ -362,10 +474,6 @@
                             {
                                 "color": "green",
                                 "value": null
-                            },
-                            {
-                                "color": "red",
-                                "value": 80
                             }
                         ]
                     }
@@ -373,67 +481,9 @@
                 "overrides": []
             },
             "gridPos": {
-                "h": 4,
-                "w": 6,
-                "x": 0,
-                "y": 16
-            },
-            "id": 5,
-            "options": {
-                "colorMode": "value",
-                "graphMode": "area",
-                "justifyMode": "auto",
-                "orientation": "auto",
-                "reduceOptions": {
-                    "values": false,
-                    "calcs": [
-                        "lastNotNull"
-                    ],
-                    "fields": ""
-                },
-                "textMode": "auto"
-            },
-            "pluginVersion": "10.0.0",
-            "targets": [
-                {
-                    "datasource": {
-                        "type": "prometheus",
-                        "uid": "prometheus"
-                    },
-                    "expr": "elysia_http_server_active_requests",
-                    "refId": "A"
-                }
-            ],
-            "title": "Active Requests",
-            "type": "stat"
-        },
-        {
-            "datasource": {
-                "type": "prometheus",
-                "uid": "prometheus"
-            },
-            "fieldConfig": {
-                "defaults": {
-                    "color": {
-                        "mode": "thresholds"
-                    },
-                    "mappings": [],
-                    "thresholds": {
-                        "mode": "absolute",
-                        "steps": [
-                            {
-                                "color": "green",
-                                "value": null
-                            }
-                        ]
-                    }
-                },
-                "overrides": []
-            },
-            "gridPos": {
-                "h": 4,
-                "w": 6,
-                "x": 6,
+                "h": 8,
+                "w": 12,
+                "x": 12,
                 "y": 16
             },
             "id": 6,
@@ -458,7 +508,8 @@
                         "type": "prometheus",
                         "uid": "prometheus"
                     },
-                    "expr": "sum(elysia_http_server_duration_count)",
+                    "expr": "elysia_http_client_duration_milliseconds_count",
+                    "legendFormat": "Total Requests",
                     "refId": "A"
                 }
             ],
